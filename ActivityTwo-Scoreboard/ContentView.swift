@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var selectedGame: Game = .telephonePictionary
     @State private var scores = Array(repeating: 0.0, count: 5)
     @State private var teamNames = Array(repeating: "", count: 5)
+    @FocusState private var focusedField: Int?
     
     var rankings: [(index: Int, score: Double, name: String)] {
         let teams = zip(0..<5, zip(scores, teamNames)).map { (index, scoreAndName) in
@@ -56,7 +57,9 @@ struct ContentView: View {
                         teamNumber: index + 1,
                         score: $scores[index],
                         teamName: $teamNames[index],
-                        gameType: selectedGame
+                        gameType: selectedGame,
+                        focusedField: _focusedField,
+                        fieldId: index
                     )
                 }
                 
@@ -98,7 +101,6 @@ struct ContentView: View {
             .navigationTitle("Score Tracker")
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    
                     Picker("Select Game", selection: $selectedGame) {
                         ForEach(Game.allCases, id: \.self) { game in
                             Text(game.rawValue).tag(game)
@@ -113,9 +115,10 @@ struct ContentView: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.title2)
                     }
-                    
                 }
-            
+            }
+            .onTapGesture {
+                focusedField = nil
             }
         }
     }
@@ -126,6 +129,8 @@ struct TeamScoreView: View {
     @Binding var score: Double
     @Binding var teamName: String
     let gameType: ContentView.Game
+    @FocusState var focusedField: Int?
+    let fieldId: Int
     
     var formattedScore: String {
         score.truncatingRemainder(dividingBy: 1) == 0
@@ -139,6 +144,7 @@ struct TeamScoreView: View {
                 TextField("Team Name", text: $teamName)
                     .font(.system(size: 32, weight: .bold))
                     .multilineTextAlignment(.center)
+                    .focused($focusedField, equals: fieldId)
                 
                 Button(action: {
                     score = 0
@@ -181,7 +187,6 @@ struct TeamScoreView: View {
                     Button("+0.5") {
                         score += 0.5
                     }
-                    
                 }
                 .buttonStyle(ScoreButtonStyle())
             }
